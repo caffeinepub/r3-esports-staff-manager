@@ -31,9 +31,13 @@ export function AnnouncementsPage() {
       setMessage("");
       toast.success("Announcement sent to all clan members!");
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to send announcement",
-      );
+      const msg =
+        err instanceof Error ? err.message : "Failed to send announcement";
+      if (msg.includes("Not logged in") || msg.includes("session")) {
+        toast.error("Your session expired. Please log out and log back in.");
+      } else {
+        toast.error(msg);
+      }
     }
   };
 

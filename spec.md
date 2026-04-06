@@ -1,45 +1,25 @@
 # R3 Esports Staff Manager
 
 ## Current State
-- Two roles: owner and staff
-- SeniorAdmin1-10 accounts exist with staff role
-- Only owners can send announcements, issue warnings, and demote users
-- Frontend AuthContext has `canSendAnnouncements` and `canDemote` locked to owner only
+Senior Admin accounts (SeniorAdmin1-10) have correct backend permissions for sending announcements, issuing warnings, and flagging demotions. The frontend AuthContext correctly grants `canSendAnnouncements`, `canManageStaff`, `canDemote`, and `canIssueWarning` to the `seniorAdmin` role.
+
+However, the backend uses the caller's ICP Principal as the session key. When a user logs in, the backend maps their Principal -> userId. If the user's Principal changes (new browser, cleared cookies, app redeployment) or if the backend was upgraded (wiping in-memory sessions despite the stable session fix), the backend has no session for that Principal. The frontend still shows them as logged in (localStorage has their userId/role), but every action fails with "Unauthorized: Not logged in" or "userId mismatch".
 
 ## Requested Changes (Diff)
 
 ### Add
-- Reintroduce `seniorAdmin` as a distinct role in the Motoko backend
-- SeniorAdmin1-10 accounts get the `seniorAdmin` role (restored from staff)
-- `seniorAdmin` users can: send announcements, issue demotion warnings, trigger inactivity warnings
-- Backend `sendAnnouncement` allows seniorAdmin callers
-- Backend `demoteUser` allows seniorAdmin callers to demote staff (not owner or other seniorAdmins)
-- Frontend: `canSendAnnouncements` = true for seniorAdmin
-- Frontend: `canDemote` returns true for seniorAdmin targeting staff
-- Frontend: Admin Panel shows demotion controls for seniorAdmin on staff rows
-- Navigation: SeniorAdmin users see the Admin Panel link (limited to demotion/users tab only)
+- Session validation hook: on app startup, after the actor is ready, call `getCurrentUser()` on the backend. If it returns null (no active backend session for the current Principal), clear the localStorage auth state and redirect to login.
+- A `SessionValidator` component that runs this check inside the AuthProvider.
 
 ### Modify
-- `normalizeRole` should NOT collapse seniorAdmin to staff anymore
-- `roleToText` returns "seniorAdmin" for seniorAdmin
-- `canDemote` backend function: seniorAdmin can demote staff only
-- `isOwnerOrSenior` helper for announcement permission checks
-- `initializeAccounts`: SeniorAdmin1-10 get `#seniorAdmin` role
-- `migrateRoles`: no longer collapse seniorAdmin -> staff (restore them)
-- AuthContext: UserRole type includes seniorAdmin
-- AdminPanelPage: seniorAdmin can access users and demotion tabs, but not passwords tab
+- `App.tsx`: include the `SessionValidator` component so session is checked on load.
+- `AuthContext.tsx`: expose a `clearAuth` method (or reuse `logout`) for the validator to call.
 
 ### Remove
-- Nothing removed
+- Nothing removed.
 
 ## Implementation Plan
-1. Backend: Add #seniorAdmin variant to UserRole type
-2. Backend: Remove seniorAdmin from normalizeRole collapse, update roleToText
-3. Backend: Update canDemote - seniorAdmin can demote #staff only
-4. Backend: Update sendAnnouncement - allow seniorAdmin
-5. Backend: initializeAccounts - SeniorAdmin1-10 get #seniorAdmin
-6. Backend: migrateRoles - restore seniorAdmin accounts (set seniorAdmin role for id 5-14)
-7. Frontend AuthContext: add seniorAdmin to UserRole, update canSendAnnouncements, canDemote
-8. Frontend AdminPanelPage: show admin panel nav for seniorAdmin, hide passwords tab
-9. Frontend: update helpers getRoleLabel/getRoleColor for seniorAdmin display
-10. Validate and deploy
+1. Add a `SessionValidator` component in `App.tsx` that uses the actor and auth context.
+2. When the actor is ready and user appears authenticated (has userId in localStorage), call `actor.getCurrentUser()`.
+3. If the result is null, call `logout()` to clear localStorage and return to login.
+4. This ensures stale sessions are detected immediately on load, fixing the "can't send announcements" issue for Senior Admins.

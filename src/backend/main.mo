@@ -53,6 +53,9 @@ actor {
   var initialized : Bool = false;
   var rolesMigrated : Bool = false;
 
+  // Stable session storage - survives canister upgrades
+  stable var stableSessions : [(Principal, Nat)] = [];
+
   let users = Map.empty<Nat, UserProfile>();
   let usersByUsername = Map.empty<Text, Nat>();
   let sessions = Map.empty<Principal, Nat>();
@@ -347,8 +350,15 @@ actor {
     rolesMigrated := true;
   };
 
-  system func preupgrade() {};
+  system func preupgrade() {
+    stableSessions := sessions.entries().toArray();
+  };
   system func postupgrade() {
+    // Restore sessions from stable storage
+    for ((principal, userId) in stableSessions.vals()) {
+      sessions.add(principal, userId);
+    };
+    stableSessions := [];
     if (not initialized) {
       initializeAccounts();
     } else if (not rolesMigrated) {

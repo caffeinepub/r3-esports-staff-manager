@@ -5,10 +5,11 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
-  redirect,
 } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
 import { Layout } from "./components/Layout";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { useActor } from "./hooks/useActor";
 import { AdminPanelPage } from "./pages/AdminPanelPage";
 import { AnnouncementsPage } from "./pages/AnnouncementsPage";
 import { AttendancePage } from "./pages/AttendancePage";
@@ -20,7 +21,7 @@ const rootRoute = createRootRoute({
   component: () => <Outlet />,
 });
 
-// Login route - redirect to / if already logged in
+// Login route
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
@@ -88,9 +89,43 @@ declare module "@tanstack/react-router" {
   }
 }
 
+/**
+ * Silently validates the backend session on mount.
+ * If localStorage says "logged in" but the backend doesn't recognize the
+ * caller's Principal (e.g. after a redeployment or browser session change),
+ * it calls logout() so ProtectedLayout redirects to the login page.
+ */
+function SessionValidator() {
+  const { isAuthenticated, logout } = useAuth();
+  const { actor, isFetching } = useActor();
+  const checkedRef = useRef(false);
+
+  useEffect(() => {
+    if (checkedRef.current) return;
+    if (isFetching || !actor || !isAuthenticated) return;
+
+    checkedRef.current = true;
+
+    actor
+      .getCurrentUser()
+      .then((user) => {
+        if (user === null || user === undefined) {
+          logout();
+        }
+      })
+      .catch(() => {
+        // If the call itself errors, the session is definitely broken
+        logout();
+      });
+  }, [actor, isFetching, isAuthenticated, logout]);
+
+  return null;
+}
+
 function AppContent() {
   return (
     <>
+      <SessionValidator />
       <RouterProvider router={router} />
       <Toaster
         position="bottom-right"
