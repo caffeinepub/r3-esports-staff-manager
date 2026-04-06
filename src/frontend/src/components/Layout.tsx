@@ -1,10 +1,13 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@tanstack/react-router";
-import { LogOut, Shield } from "lucide-react";
+import { KeyRound, LogOut, Shield, UserPen } from "lucide-react";
 import type { ReactNode } from "react";
+import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getRoleColor, getRoleLabel } from "../utils/helpers";
+import { ChangePasswordDialog } from "./ChangePasswordDialog";
+import { ChangeUsernameDialog } from "./ChangeUsernameDialog";
 import { NotificationBell } from "./NotificationBell";
 
 interface LayoutProps {
@@ -15,6 +18,8 @@ export function Layout({ children }: LayoutProps) {
   const { username, role, logout, canManageStaff } = useAuth();
   const router = useRouter();
   const currentPath = router.state.location.pathname;
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [changeUsernameOpen, setChangeUsernameOpen] = useState(false);
 
   const navItems = [
     { label: "Dashboard", path: "/" },
@@ -29,15 +34,15 @@ export function Layout({ children }: LayoutProps) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gaming-dark">
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-gaming-border bg-gaming-darker/95 backdrop-blur-sm">
+      <header className="sticky top-0 z-50 w-full border-b border-gaming-border bg-white/95 backdrop-blur-sm shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           {/* Brand */}
           <div className="flex items-center gap-3 shrink-0">
             <div
-              className="h-9 w-9 rounded-md overflow-hidden border border-neon-peach/40"
-              style={{ boxShadow: "0 0 10px oklch(0.82 0.18 38 / 0.35)" }}
+              className="h-9 w-9 rounded-md overflow-hidden border-2 border-amber-400/60"
+              style={{ boxShadow: "0 0 10px oklch(0.68 0.16 82 / 0.30)" }}
             >
               <img
                 src="/assets/rh3huum-019d5830-baeb-77e2-a99b-dbc4a0b7b9e9.jpeg"
@@ -64,7 +69,7 @@ export function Layout({ children }: LayoutProps) {
                 className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-150 ${
                   isActive(item.path)
                     ? "nav-active shadow-neon-yellow"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                    : "text-muted-foreground hover:text-foreground hover:bg-amber-50"
                 }`}
                 data-ocid={`nav.${item.label.toLowerCase().replace(" ", "_")}.link`}
               >
@@ -76,9 +81,9 @@ export function Layout({ children }: LayoutProps) {
           {/* Right side */}
           <div className="flex items-center gap-2 shrink-0">
             <NotificationBell />
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/30 border border-gaming-border">
-              <div className="h-7 w-7 rounded-full bg-gradient-to-br from-neon-peach/30 to-neon-amber/30 border border-neon-peach/50 flex items-center justify-center">
-                <Shield className="h-3.5 w-3.5 text-neon-peach" />
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200">
+              <div className="h-7 w-7 rounded-full bg-gradient-to-br from-amber-300/50 to-yellow-400/50 border border-amber-400/60 flex items-center justify-center">
+                <Shield className="h-3.5 w-3.5 text-amber-600" />
               </div>
               <div className="leading-none">
                 <div className="text-xs font-medium text-foreground">
@@ -89,6 +94,26 @@ export function Layout({ children }: LayoutProps) {
                 </div>
               </div>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setChangeUsernameOpen(true)}
+              className="text-muted-foreground hover:text-amber-600 hover:bg-amber-50"
+              title="Change Username"
+              data-ocid="nav.change_username.button"
+            >
+              <UserPen className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setChangePasswordOpen(true)}
+              className="text-muted-foreground hover:text-amber-600 hover:bg-amber-50"
+              title="Change Password"
+              data-ocid="nav.change_password.button"
+            >
+              <KeyRound className="h-4 w-4" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -103,7 +128,7 @@ export function Layout({ children }: LayoutProps) {
         </div>
 
         {/* Mobile nav */}
-        <div className="md:hidden border-t border-gaming-border px-4 py-2 flex gap-1 overflow-x-auto">
+        <div className="md:hidden border-t border-gaming-border px-4 py-2 flex gap-1 overflow-x-auto bg-white">
           {navItems.map((item) => (
             <Link
               key={item.path}
@@ -111,7 +136,7 @@ export function Layout({ children }: LayoutProps) {
               className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
                 isActive(item.path)
                   ? "nav-active"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                  : "text-muted-foreground hover:text-foreground hover:bg-amber-50"
               }`}
             >
               {item.label}
@@ -126,7 +151,7 @@ export function Layout({ children }: LayoutProps) {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-gaming-border bg-gaming-darker/80 py-4">
+      <footer className="border-t border-gaming-border bg-white/80 py-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
           <span>
             © {new Date().getFullYear()} R3 ESPORTS. All rights reserved.
@@ -135,12 +160,22 @@ export function Layout({ children }: LayoutProps) {
             href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-neon-peach transition-colors"
+            className="hover:text-amber-600 transition-colors"
           >
             Built with ❤️ using caffeine.ai
           </a>
         </div>
       </footer>
+
+      {/* Dialogs */}
+      <ChangePasswordDialog
+        open={changePasswordOpen}
+        onClose={() => setChangePasswordOpen(false)}
+      />
+      <ChangeUsernameDialog
+        open={changeUsernameOpen}
+        onClose={() => setChangeUsernameOpen(false)}
+      />
     </div>
   );
 }

@@ -63,9 +63,9 @@ export function AnnouncementsPage() {
           transition={{ duration: 0.3, delay: 0.05 }}
           className="neon-border-gradient"
         >
-          <div className="rounded-lg bg-gaming-card border border-gaming-border p-5">
+          <div className="rounded-lg bg-white border border-amber-200/60 p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-3">
-              <Megaphone className="h-4 w-4 text-neon-peach" />
+              <Megaphone className="h-4 w-4 text-amber-600" />
               <h2 className="font-semibold text-sm text-foreground">
                 New Announcement
               </h2>
@@ -75,7 +75,7 @@ export function AnnouncementsPage() {
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Write your announcement to all clan staff..."
               rows={4}
-              className="bg-input/40 border-gaming-border resize-none focus:border-neon-peach/60 mb-3"
+              className="bg-amber-50/40 border-amber-200 resize-none focus:border-amber-400 mb-3"
               data-ocid="announcements.compose.textarea"
             />
             <div className="flex items-center justify-between">
@@ -116,7 +116,7 @@ export function AnnouncementsPage() {
           </div>
         ) : sorted.length === 0 ? (
           <div
-            className="rounded-lg bg-gaming-card border border-gaming-border py-16 text-center"
+            className="rounded-lg bg-white border border-amber-200/60 py-16 text-center shadow-sm"
             data-ocid="announcements.feed.empty_state"
           >
             <Megaphone className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-30" />
@@ -138,7 +138,7 @@ export function AnnouncementsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.98 }}
                 transition={{ duration: 0.2, delay: idx * 0.03 }}
-                className="rounded-lg bg-gaming-card border border-gaming-border p-5 hover:border-neon-peach/20 transition-colors"
+                className="rounded-lg bg-white border border-amber-200/60 p-5 hover:border-amber-400/60 hover:shadow-sm transition-all shadow-xs"
                 data-ocid={`announcements.feed.item.${idx + 1}`}
               >
                 <div className="flex items-start gap-3">

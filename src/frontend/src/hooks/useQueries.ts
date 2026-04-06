@@ -176,3 +176,92 @@ export function useRunInactivityCheck() {
     },
   });
 }
+
+export function useChangePassword() {
+  const { actor } = useActor();
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      currentPassword,
+      newPassword,
+    }: { userId: bigint; currentPassword: string; newPassword: string }) => {
+      if (!actor) throw new Error("No actor");
+      const result = await (actor as any).changePassword(
+        userId,
+        currentPassword,
+        newPassword,
+      );
+      if (result.__kind__ === "err") throw new Error(result.err);
+      return result;
+    },
+  });
+}
+
+export function useAdminChangePassword() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      requesterId,
+      targetUserId,
+      newPassword,
+    }: { requesterId: bigint; targetUserId: bigint; newPassword: string }) => {
+      if (!actor) throw new Error("No actor");
+      const result = await (actor as any).adminChangePassword(
+        requesterId,
+        targetUserId,
+        newPassword,
+      );
+      if (result.__kind__ === "err") throw new Error(result.err);
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allPasswords"] });
+    },
+  });
+}
+
+export function useChangeUsername() {
+  const { actor } = useActor();
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      currentPassword,
+      newUsername,
+    }: { userId: bigint; currentPassword: string; newUsername: string }) => {
+      if (!actor) throw new Error("No actor");
+      const result = await (actor as any).changeUsername(
+        userId,
+        currentPassword,
+        newUsername,
+      );
+      if (result.__kind__ === "err") throw new Error(result.err);
+      return result;
+    },
+  });
+}
+
+export function useAdminChangeUsername() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      requesterId,
+      targetUserId,
+      newUsername,
+    }: { requesterId: bigint; targetUserId: bigint; newUsername: string }) => {
+      if (!actor) throw new Error("No actor");
+      const result = await (actor as any).adminChangeUsername(
+        requesterId,
+        targetUserId,
+        newUsername,
+      );
+      if (result.__kind__ === "err") throw new Error(result.err);
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allUsers"] });
+      queryClient.invalidateQueries({ queryKey: ["attendanceBoard"] });
+    },
+  });
+}

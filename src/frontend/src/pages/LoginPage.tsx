@@ -68,10 +68,10 @@ export function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center bg-gaming-dark px-4"
+      className="min-h-screen flex items-center justify-center bg-background px-4"
       style={{
         backgroundImage:
-          "radial-gradient(ellipse at 50% 0%, oklch(0.22 0.08 38 / 0.65) 0%, transparent 70%), radial-gradient(ellipse at 80% 80%, oklch(0.20 0.07 90 / 0.3) 0%, transparent 60%)",
+          "radial-gradient(ellipse at 50% 0%, oklch(0.90 0.08 82 / 0.40) 0%, transparent 65%), radial-gradient(ellipse at 80% 80%, oklch(0.92 0.06 88 / 0.25) 0%, transparent 60%)",
       }}
     >
       <motion.div
@@ -83,10 +83,10 @@ export function LoginPage() {
         {/* Logo area */}
         <div className="flex flex-col items-center mb-8">
           <div
-            className="h-20 w-20 rounded-xl border-2 border-neon-peach/50 overflow-hidden mb-4"
+            className="h-20 w-20 rounded-xl border-2 border-amber-400/70 overflow-hidden mb-4"
             style={{
               boxShadow:
-                "0 0 24px oklch(0.82 0.18 38 / 0.45), 0 0 60px oklch(0.90 0.20 90 / 0.15)",
+                "0 0 24px oklch(0.68 0.16 82 / 0.40), 0 0 60px oklch(0.82 0.18 88 / 0.15)",
             }}
           >
             <img
@@ -109,9 +109,9 @@ export function LoginPage() {
             type="button"
             onClick={handleOwnerQuickLogin}
             disabled={isOwnerLoading || !actor}
-            className="w-full flex items-center justify-center gap-2 rounded-lg border-2 border-yellow-500/60 bg-yellow-900/20 hover:bg-yellow-900/40 text-yellow-400 font-bold text-sm py-3 px-4 tracking-wide transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 rounded-lg border-2 border-amber-500 bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm py-3 px-4 tracking-wide transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
             style={{
-              boxShadow: "0 0 16px oklch(0.85 0.20 90 / 0.25)",
+              boxShadow: "0 0 16px oklch(0.68 0.16 82 / 0.30)",
             }}
             data-ocid="login.owner1_quick_button"
           >
@@ -134,7 +134,7 @@ export function LoginPage() {
 
         {/* Card */}
         <div className="neon-border-gradient">
-          <div className="rounded-lg bg-gaming-card border border-gaming-border p-6">
+          <div className="rounded-lg bg-white border border-amber-200/60 p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
                 <Label
@@ -151,7 +151,7 @@ export function LoginPage() {
                   placeholder="Enter your username"
                   required
                   autoComplete="username"
-                  className="bg-input/50 border-gaming-border focus:border-neon-peach/60 focus:ring-neon-peach/20"
+                  className="bg-amber-50/50 border-amber-200 focus:border-amber-400 focus:ring-amber-300/30"
                   data-ocid="login.input"
                 />
               </div>
@@ -172,7 +172,7 @@ export function LoginPage() {
                     placeholder="Enter your password"
                     required
                     autoComplete="current-password"
-                    className="bg-input/50 border-gaming-border focus:border-neon-peach/60 focus:ring-neon-peach/20 pr-10"
+                    className="bg-amber-50/50 border-amber-200 focus:border-amber-400 focus:ring-amber-300/30 pr-10"
                     data-ocid="login.password_input"
                   />
                   <button
@@ -219,7 +219,7 @@ export function LoginPage() {
             </form>
 
             <p className="mt-4 text-center text-xs text-muted-foreground">
-              Contact an Owner or Senior Admin to get your credentials.
+              Contact an Owner to get your credentials.
             </p>
           </div>
         </div>

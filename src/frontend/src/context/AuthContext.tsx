@@ -1,12 +1,6 @@
-import {
-  type ReactNode,
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { type ReactNode, createContext, useContext, useState } from "react";
 
-export type UserRole = "owner" | "seniorAdmin" | "admin" | "staff";
+export type UserRole = "owner" | "staff";
 
 export interface AuthState {
   userId: bigint | null;
@@ -17,11 +11,13 @@ export interface AuthState {
 interface AuthContextValue extends AuthState {
   login: (userId: bigint, username: string, role: string) => void;
   logout: () => void;
+  updateUsername: (newUsername: string) => void;
   isAuthenticated: boolean;
   canManageStaff: boolean;
   canSendAnnouncements: boolean;
   canViewPasswords: boolean;
   canDemote: (targetRole: string) => boolean;
+  canChangePasswordFor: (targetRole: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -68,17 +64,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(STORAGE_KEY);
   };
 
+  const updateUsername = (newUsername: string) => {
+    setAuth((prev) => {
+      const updated = { ...prev, username: newUsername };
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({ ...parsed, username: newUsername }),
+          );
+        }
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
+  };
+
   const isAuthenticated = auth.userId !== null;
   const role = auth.role;
 
-  const canManageStaff = role === "owner" || role === "seniorAdmin";
-  const canSendAnnouncements = role === "owner" || role === "seniorAdmin";
-  const canViewPasswords = role === "owner" || role === "seniorAdmin";
+  const canManageStaff = role === "owner";
+  const canSendAnnouncements = role === "owner";
+  const canViewPasswords = role === "owner";
 
   const canDemote = (targetRole: string) => {
     if (role === "owner") return targetRole !== "owner";
-    if (role === "seniorAdmin")
-      return targetRole === "staff" || targetRole === "admin";
+    return false;
+  };
+
+  const canChangePasswordFor = (_targetRole: string) => {
+    if (role === "owner") return true;
     return false;
   };
 
@@ -88,11 +106,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ...auth,
         login,
         logout,
+        updateUsername,
         isAuthenticated,
         canManageStaff,
         canSendAnnouncements,
         canViewPasswords,
         canDemote,
+        canChangePasswordFor,
       }}
     >
       {children}

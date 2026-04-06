@@ -39,7 +39,7 @@ interface StatCardProps {
 function StatCard({ label, value, icon, accent, ocid }: StatCardProps) {
   return (
     <div
-      className="rounded-lg bg-gaming-card border border-gaming-border p-4 flex items-center gap-4"
+      className="rounded-lg bg-white border border-amber-200/60 p-4 flex items-center gap-4 shadow-sm"
       data-ocid={ocid}
     >
       <div
@@ -126,7 +126,7 @@ export function DashboardPage() {
           transition={{ duration: 0.3 }}
           className="neon-border-gradient"
         >
-          <div className="rounded-lg bg-gaming-card border border-gaming-border p-4">
+          <div className="rounded-lg bg-white border border-amber-200/60 p-4">
             <div className="flex gap-3">
               <div className="flex-1">
                 <Textarea
@@ -134,7 +134,7 @@ export function DashboardPage() {
                   onChange={(e) => setBroadcastMsg(e.target.value)}
                   placeholder="Broadcast message to all clan staff..."
                   rows={2}
-                  className="bg-input/40 border-gaming-border resize-none focus:border-neon-peach/60"
+                  className="bg-amber-50/40 border-amber-200 resize-none focus:border-amber-400"
                   data-ocid="dashboard.broadcast.textarea"
                 />
               </div>
@@ -168,28 +168,28 @@ export function DashboardPage() {
           label="Currently Online"
           value={boardLoading ? "..." : onlineCount}
           icon={<Wifi className="h-5 w-5 text-gaming-online" />}
-          accent="bg-green-900/40"
+          accent="bg-green-50 border border-green-200"
           ocid="dashboard.online_stat.card"
         />
         <StatCard
           label="Total Staff"
           value={boardLoading ? "..." : board.length}
-          icon={<Users className="h-5 w-5 text-neon-peach" />}
-          accent="bg-orange-900/40"
+          icon={<Users className="h-5 w-5 text-amber-600" />}
+          accent="bg-amber-50 border border-amber-200"
           ocid="dashboard.total_stat.card"
         />
         <StatCard
           label="Inactivity Warnings"
           value={boardLoading ? "..." : warningCount}
-          icon={<AlertTriangle className="h-5 w-5 text-yellow-400" />}
-          accent="bg-yellow-900/40"
+          icon={<AlertTriangle className="h-5 w-5 text-yellow-600" />}
+          accent="bg-yellow-50 border border-yellow-200"
           ocid="dashboard.warnings_stat.card"
         />
         <StatCard
           label="Demotion Warnings"
           value={boardLoading ? "..." : demotionCount}
-          icon={<TrendingDown className="h-5 w-5 text-red-400" />}
-          accent="bg-red-900/40"
+          icon={<TrendingDown className="h-5 w-5 text-red-500" />}
+          accent="bg-red-50 border border-red-200"
           ocid="dashboard.demotion_stat.card"
         />
       </motion.div>
@@ -202,13 +202,13 @@ export function DashboardPage() {
         className="grid lg:grid-cols-3 gap-6"
       >
         {/* My Status */}
-        <div className="rounded-lg bg-gaming-card border border-gaming-border p-5 space-y-4">
+        <div className="rounded-lg bg-white border border-amber-200/60 p-5 space-y-4 shadow-sm">
           <h2 className="font-semibold text-sm tracking-wider text-muted-foreground uppercase">
             My Status
           </h2>
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-neon-peach/30 to-neon-amber/30 border border-neon-peach/40 flex items-center justify-center">
-              <span className="font-bold text-sm text-neon-peach">
+            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-amber-200/60 to-yellow-300/60 border border-amber-400/50 flex items-center justify-center">
+              <span className="font-bold text-sm text-amber-700">
                 {username ? username.slice(0, 2).toUpperCase() : "?"}
               </span>
             </div>
@@ -245,7 +245,7 @@ export function DashboardPage() {
               size="sm"
               disabled={myStatus?.isOnline || checkIn.isPending}
               onClick={handleCheckIn}
-              className="flex-1 bg-green-900/50 hover:bg-green-800/60 text-green-400 border border-green-700/50 disabled:opacity-40"
+              className="flex-1 bg-green-50 hover:bg-green-100 text-green-700 border border-green-300 disabled:opacity-40"
               data-ocid="dashboard.checkin.button"
             >
               {checkIn.isPending ? (
@@ -259,7 +259,7 @@ export function DashboardPage() {
               size="sm"
               disabled={!myStatus?.isOnline || checkOut.isPending}
               onClick={handleCheckOut}
-              className="flex-1 bg-red-900/50 hover:bg-red-800/60 text-red-400 border border-red-700/50 disabled:opacity-40"
+              className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 border border-red-300 disabled:opacity-40"
               data-ocid="dashboard.checkout.button"
             >
               {checkOut.isPending ? (
@@ -273,7 +273,7 @@ export function DashboardPage() {
         </div>
 
         {/* Recent Announcements */}
-        <div className="lg:col-span-2 rounded-lg bg-gaming-card border border-gaming-border p-5 space-y-4">
+        <div className="lg:col-span-2 rounded-lg bg-white border border-amber-200/60 p-5 space-y-4 shadow-sm">
           <h2 className="font-semibold text-sm tracking-wider text-muted-foreground uppercase">
             Recent Announcements
           </h2>
@@ -296,11 +296,11 @@ export function DashboardPage() {
               {recentAnnouncements.map((ann, idx) => (
                 <div
                   key={ann.id.toString()}
-                  className="rounded-md bg-muted/20 border border-gaming-border p-3"
+                  className="rounded-md bg-amber-50/60 border border-amber-200/50 p-3"
                   data-ocid={`dashboard.announcement.item.${idx + 1}`}
                 >
                   <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-sm font-medium text-neon-peach">
+                    <span className="text-sm font-medium text-amber-700">
                       {ann.authorUsername}
                     </span>
                     <span className="text-xs text-muted-foreground">
@@ -324,7 +324,7 @@ export function DashboardPage() {
         transition={{ duration: 0.3, delay: 0.15 }}
         className="neon-border-gradient"
       >
-        <div className="rounded-lg bg-gaming-card border border-gaming-border p-5">
+        <div className="rounded-lg bg-white border border-amber-200/60 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="font-semibold text-base text-foreground">
@@ -356,7 +356,7 @@ export function DashboardPage() {
                 data-ocid="dashboard.board.table"
               >
                 <thead>
-                  <tr className="border-b border-gaming-border">
+                  <tr className="border-b border-amber-200/60">
                     <th className="text-left py-2 pr-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Member
                     </th>
@@ -371,11 +371,11 @@ export function DashboardPage() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gaming-border/50">
+                <tbody className="divide-y divide-amber-100">
                   {board.slice(0, 8).map((member, idx) => (
                     <tr
                       key={member.userId.toString()}
-                      className="hover:bg-muted/10 transition-colors"
+                      className="hover:bg-amber-50/40 transition-colors"
                       data-ocid={`dashboard.board.row.${idx + 1}`}
                     >
                       <td className="py-2.5 pr-4">
@@ -394,8 +394,8 @@ export function DashboardPage() {
                         <span
                           className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium ${
                             member.isOnline
-                              ? "bg-green-900/40 text-green-400 border border-green-700/50"
-                              : "bg-red-900/40 text-red-400 border border-red-700/50"
+                              ? "bg-green-50 text-green-700 border border-green-200"
+                              : "bg-red-50 text-red-600 border border-red-200"
                           }`}
                         >
                           <div

@@ -19,49 +19,49 @@
 @layer base {
   :root {
     --radius: 0.5rem;
-    /* Dark gaming theme — peach & yellow brand accents */
-    --background: 0.1 0.012 30;
-    --foreground: 0.95 0.01 60;
-    --card: 0.14 0.016 30;
-    --card-foreground: 0.95 0.01 60;
-    --popover: 0.16 0.018 30;
-    --popover-foreground: 0.95 0.01 60;
-    /* Primary = vibrant peach */
-    --primary: 0.78 0.16 38;
-    --primary-foreground: 0.1 0.01 30;
-    --secondary: 0.18 0.02 30;
-    --secondary-foreground: 0.85 0.01 60;
-    --muted: 0.18 0.018 30;
-    --muted-foreground: 0.58 0.03 50;
-    /* Accent = bright yellow */
-    --accent: 0.88 0.18 90;
-    --accent-foreground: 0.1 0.01 30;
-    --destructive: 0.6 0.22 25;
+    /* Gold & White theme */
+    --background: 0.97 0.008 80;
+    --foreground: 0.18 0.02 40;
+    --card: 1.0 0.0 0;
+    --card-foreground: 0.18 0.02 40;
+    --popover: 1.0 0.0 0;
+    --popover-foreground: 0.18 0.02 40;
+    /* Primary = rich gold */
+    --primary: 0.68 0.16 82;
+    --primary-foreground: 1.0 0.0 0;
+    --secondary: 0.94 0.04 82;
+    --secondary-foreground: 0.35 0.08 70;
+    --muted: 0.94 0.02 80;
+    --muted-foreground: 0.52 0.04 60;
+    /* Accent = bright warm gold */
+    --accent: 0.82 0.18 82;
+    --accent-foreground: 0.15 0.02 40;
+    --destructive: 0.55 0.22 25;
     --destructive-foreground: 0.98 0.005 0;
-    --border: 0.24 0.03 40;
-    --input: 0.2 0.02 30;
-    --ring: 0.78 0.16 38;
-    --chart-1: 0.82 0.16 38;
-    --chart-2: 0.88 0.18 90;
+    --border: 0.88 0.05 82;
+    --input: 0.96 0.01 80;
+    --ring: 0.68 0.16 82;
+    --chart-1: 0.68 0.16 82;
+    --chart-2: 0.82 0.18 82;
     --chart-3: 0.78 0.18 65;
     --chart-4: 0.65 0.18 145;
-    --chart-5: 0.6 0.22 25;
-    --sidebar: 0.11 0.014 30;
-    --sidebar-foreground: 0.95 0.01 60;
-    --sidebar-primary: 0.78 0.16 38;
-    --sidebar-primary-foreground: 0.1 0.01 30;
-    --sidebar-accent: 0.18 0.018 30;
-    --sidebar-accent-foreground: 0.95 0.01 60;
-    --sidebar-border: 0.24 0.03 40;
-    --sidebar-ring: 0.78 0.16 38;
+    --chart-5: 0.55 0.22 25;
+    --sidebar: 0.99 0.005 80;
+    --sidebar-foreground: 0.18 0.02 40;
+    --sidebar-primary: 0.68 0.16 82;
+    --sidebar-primary-foreground: 1.0 0.0 0;
+    --sidebar-accent: 0.94 0.04 82;
+    --sidebar-accent-foreground: 0.35 0.08 70;
+    --sidebar-border: 0.88 0.05 82;
+    --sidebar-ring: 0.68 0.16 82;
 
-    /* Neon brand colors — clearly peach & yellow */
-    --neon-peach: 0.82 0.18 38;
-    --neon-yellow: 0.9 0.2 90;
-    --neon-amber: 0.84 0.18 65;
-    --status-online: 0.65 0.18 145;
-    --status-offline: 0.6 0.22 25;
-    --gold: 0.88 0.19 78;
+    /* Gold brand colors */
+    --neon-peach: 0.68 0.16 82;
+    --neon-yellow: 0.8 0.18 88;
+    --neon-amber: 0.72 0.17 72;
+    --status-online: 0.55 0.18 145;
+    --status-offline: 0.55 0.22 25;
+    --gold: 0.68 0.16 82;
   }
 
   * {
@@ -69,61 +69,31 @@
   }
 
   html {
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   body {
     @apply bg-background text-foreground;
     font-family: "Satoshi", "system-ui", sans-serif;
-    background: oklch(0.1 0.012 30);
+    background: oklch(0.97 0.008 80);
     background-image: radial-gradient(
         ellipse at 20% 0%,
-        oklch(0.22 0.08 38 / 0.55) 0%,
+        oklch(0.9 0.08 82 / 0.3) 0%,
         transparent 60%
       ),
       radial-gradient(
         ellipse at 80% 100%,
-        oklch(0.2 0.07 90 / 0.35) 0%,
+        oklch(0.92 0.06 88 / 0.2) 0%,
         transparent 60%
       );
     min-height: 100vh;
   }
-
-  .dark {
-    --background: 0.1 0.012 30;
-    --foreground: 0.95 0.01 60;
-    --card: 0.14 0.016 30;
-    --card-foreground: 0.95 0.01 60;
-    --popover: 0.16 0.018 30;
-    --popover-foreground: 0.95 0.01 60;
-    --primary: 0.78 0.16 38;
-    --primary-foreground: 0.1 0.01 30;
-    --secondary: 0.18 0.02 30;
-    --secondary-foreground: 0.85 0.01 60;
-    --muted: 0.18 0.018 30;
-    --muted-foreground: 0.58 0.03 50;
-    --accent: 0.88 0.18 90;
-    --accent-foreground: 0.1 0.01 30;
-    --destructive: 0.6 0.22 25;
-    --destructive-foreground: 0.98 0.005 0;
-    --border: 0.24 0.03 40;
-    --input: 0.2 0.02 30;
-    --ring: 0.78 0.16 38;
-    --sidebar: 0.11 0.014 30;
-    --sidebar-foreground: 0.95 0.01 60;
-    --sidebar-primary: 0.78 0.16 38;
-    --sidebar-primary-foreground: 0.1 0.01 30;
-    --sidebar-accent: 0.18 0.018 30;
-    --sidebar-accent-foreground: 0.95 0.01 60;
-    --sidebar-border: 0.24 0.03 40;
-    --sidebar-ring: 0.78 0.16 38;
-  }
 }
 
-/* Neon gradient card border — peach to yellow */
+/* Gold gradient card border */
 .neon-border {
   box-shadow: 0 0 0 1px oklch(var(--neon-peach)), 0 0 20px
-    oklch(var(--neon-peach) / 0.25), 0 0 40px oklch(var(--neon-yellow) / 0.12);
+    oklch(var(--neon-peach) / 0.2), 0 0 40px oklch(var(--neon-yellow) / 0.1);
 }
 
 .neon-border-gradient {
@@ -138,8 +108,8 @@
   border-radius: calc(var(--radius) + 1px);
   background: linear-gradient(
     135deg,
-    oklch(0.82 0.18 38 / 0.8),
-    oklch(0.9 0.2 90 / 0.8)
+    oklch(0.68 0.16 82 / 0.7),
+    oklch(0.82 0.18 88 / 0.7)
   );
   z-index: 0;
   pointer-events: none;
@@ -150,44 +120,44 @@
   z-index: 1;
 }
 
-/* Glow text effect — peach glow */
+/* Gold glow text */
 .glow-text {
-  text-shadow: 0 0 18px oklch(0.82 0.18 38 / 0.7), 0 0 40px
-    oklch(0.9 0.2 90 / 0.3);
+  text-shadow: 0 0 18px oklch(0.68 0.16 82 / 0.5), 0 0 40px
+    oklch(0.82 0.18 88 / 0.25);
 }
 
-/* Scrollbar styling */
+/* Scrollbar styling — light gold */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: oklch(0.1 0.012 30);
+  background: oklch(0.95 0.01 80);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: oklch(0.28 0.06 38);
+  background: oklch(0.78 0.12 82);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.5 0.14 38);
+  background: oklch(0.65 0.16 82);
 }
 
-/* Nav pill active — peach to yellow gradient */
+/* Nav pill active — gold gradient */
 .nav-active {
-  background: linear-gradient(135deg, oklch(0.55 0.18 38), oklch(0.6 0.18 70));
-  color: oklch(0.98 0.005 0);
-  box-shadow: 0 0 12px oklch(0.82 0.18 38 / 0.4);
+  background: linear-gradient(135deg, oklch(0.62 0.17 82), oklch(0.7 0.18 78));
+  color: oklch(1.0 0.0 0);
+  box-shadow: 0 0 12px oklch(0.68 0.16 82 / 0.35);
 }
 
-/* Gradient button — vibrant peach to amber */
+/* Gradient button — rich gold */
 .btn-gradient {
-  background: linear-gradient(135deg, oklch(0.68 0.2 38), oklch(0.7 0.2 65));
+  background: linear-gradient(135deg, oklch(0.62 0.17 82), oklch(0.7 0.18 78));
 }
 
 .btn-gradient:hover {
-  background: linear-gradient(135deg, oklch(0.74 0.2 38), oklch(0.76 0.2 65));
-  box-shadow: 0 4px 20px oklch(0.68 0.2 38 / 0.5);
+  background: linear-gradient(135deg, oklch(0.58 0.18 82), oklch(0.66 0.19 78));
+  box-shadow: 0 4px 20px oklch(0.68 0.16 82 / 0.4);
 }

@@ -107,7 +107,7 @@ export function AttendancePage() {
             size="sm"
             onClick={handleRunCheck}
             disabled={runCheck.isPending}
-            className="border-neon-peach/30 text-neon-peach hover:bg-neon-peach/10 self-start sm:self-auto"
+            className="border-amber-400 text-amber-700 hover:bg-amber-50 self-start sm:self-auto"
             data-ocid="attendance.run_check.button"
           >
             {runCheck.isPending ? (
@@ -136,7 +136,7 @@ export function AttendancePage() {
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                 filter === f.key
                   ? "nav-active shadow-neon-yellow"
-                  : "bg-gaming-card border border-gaming-border text-muted-foreground hover:text-foreground hover:border-neon-peach/30"
+                  : "bg-white border border-amber-200 text-muted-foreground hover:text-foreground hover:border-amber-400"
               }`}
               data-ocid="attendance.filter.tab"
             >
@@ -149,7 +149,7 @@ export function AttendancePage() {
             placeholder="Search staff..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="bg-gaming-card border-gaming-border w-full sm:w-52 focus:border-neon-peach/60"
+            className="bg-white border-amber-200 w-full sm:w-52 focus:border-amber-400"
             data-ocid="attendance.search_input"
           />
         </div>
@@ -162,7 +162,7 @@ export function AttendancePage() {
         transition={{ duration: 0.3, delay: 0.1 }}
         className="neon-border-gradient"
       >
-        <div className="rounded-lg bg-gaming-card border border-gaming-border overflow-hidden">
+        <div className="rounded-lg bg-white border border-amber-200/60 overflow-hidden shadow-sm">
           {isLoading ? (
             <div
               className="flex items-center justify-center py-16"
@@ -182,7 +182,7 @@ export function AttendancePage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm" data-ocid="attendance.table">
                 <thead>
-                  <tr className="border-b border-gaming-border bg-muted/20">
+                  <tr className="border-b border-amber-200/60 bg-amber-50/60">
                     <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Member
                     </th>
@@ -208,7 +208,7 @@ export function AttendancePage() {
                     )}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gaming-border/50">
+                <tbody className="divide-y divide-amber-100">
                   {filtered.map((member, idx) => {
                     const days = Number(member.inactivityDays);
                     const hasDemotion = days >= 7;
@@ -216,11 +216,11 @@ export function AttendancePage() {
                     return (
                       <tr
                         key={member.userId.toString()}
-                        className={`hover:bg-muted/10 transition-colors ${
+                        className={`hover:bg-amber-50/40 transition-colors ${
                           hasDemotion
-                            ? "bg-red-950/10"
+                            ? "bg-red-50"
                             : hasWarning
-                              ? "bg-yellow-950/10"
+                              ? "bg-yellow-50"
                               : ""
                         }`}
                         data-ocid={`attendance.table.row.${idx + 1}`}
@@ -250,8 +250,8 @@ export function AttendancePage() {
                           <span
                             className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium ${
                               member.isOnline
-                                ? "bg-green-900/40 text-green-400 border border-green-700/50"
-                                : "bg-red-900/40 text-red-400 border border-red-700/50"
+                                ? "bg-green-50 text-green-700 border border-green-200"
+                                : "bg-red-50 text-red-600 border border-red-200"
                             }`}
                           >
                             <div
@@ -268,9 +268,9 @@ export function AttendancePage() {
                             className={
                               days > 0
                                 ? hasDemotion
-                                  ? "text-red-400"
+                                  ? "text-red-600"
                                   : hasWarning
-                                    ? "text-yellow-400"
+                                    ? "text-yellow-600"
                                     : "text-muted-foreground"
                                 : "text-muted-foreground"
                             }
@@ -281,12 +281,12 @@ export function AttendancePage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1.5">
                             {hasWarning && (
-                              <span className="inline-flex items-center gap-1 text-xs text-yellow-400 bg-yellow-900/30 border border-yellow-700/40 px-2 py-0.5 rounded-full">
+                              <span className="inline-flex items-center gap-1 text-xs text-yellow-700 bg-yellow-50 border border-yellow-300 px-2 py-0.5 rounded-full">
                                 <AlertTriangle className="h-3 w-3" /> Warning
                               </span>
                             )}
                             {hasDemotion && (
-                              <span className="inline-flex items-center gap-1 text-xs text-red-400 bg-red-900/30 border border-red-700/40 px-2 py-0.5 rounded-full">
+                              <span className="inline-flex items-center gap-1 text-xs text-red-600 bg-red-50 border border-red-300 px-2 py-0.5 rounded-full">
                                 <AlertOctagon className="h-3 w-3" /> Demotion
                               </span>
                             )}
@@ -306,7 +306,7 @@ export function AttendancePage() {
                                   handleDemote(member.userId, member.username)
                                 }
                                 disabled={demoteUser.isPending}
-                                className="text-xs text-red-400 hover:text-red-300 font-medium transition-colors flex items-center gap-1 disabled:opacity-40"
+                                className="text-xs text-red-600 hover:text-red-700 font-medium transition-colors flex items-center gap-1 disabled:opacity-40"
                                 data-ocid={`attendance.demote.button.${idx + 1}`}
                               >
                                 <TrendingDown className="h-3.5 w-3.5" />

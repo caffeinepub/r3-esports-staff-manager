@@ -30,8 +30,6 @@ export interface Notification {
     timestamp: bigint;
 }
 export enum UserRole {
-    admin = "admin",
-    seniorAdmin = "seniorAdmin",
     owner = "owner",
     staff = "staff"
 }

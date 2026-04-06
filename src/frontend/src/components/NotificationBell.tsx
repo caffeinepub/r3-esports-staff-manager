@@ -48,10 +48,10 @@ export function NotificationBell() {
       </PopoverTrigger>
       <PopoverContent
         align="end"
-        className="w-80 p-0 bg-gaming-card border-gaming-border"
+        className="w-80 p-0 bg-white border-amber-200 shadow-lg"
         data-ocid="notifications.popover"
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gaming-border">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-amber-200">
           <h3 className="font-semibold text-sm text-foreground">
             Notifications
           </h3>
@@ -59,7 +59,7 @@ export function NotificationBell() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-xs text-neon-peach hover:text-neon-peach/80 h-auto py-0"
+              className="text-xs text-amber-600 hover:text-amber-700 h-auto py-0"
               onClick={handleMarkAllRead}
             >
               Mark all read
@@ -75,7 +75,7 @@ export function NotificationBell() {
               No notifications
             </div>
           ) : (
-            <div className="divide-y divide-gaming-border">
+            <div className="divide-y divide-amber-100">
               {notifications
                 .slice()
                 .sort((a, b) => Number(b.timestamp - a.timestamp))
@@ -83,8 +83,8 @@ export function NotificationBell() {
                   <button
                     type="button"
                     key={notif.id.toString()}
-                    className={`w-full text-left px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors ${
-                      !notif.isRead ? "bg-orange-950/30" : ""
+                    className={`w-full text-left px-4 py-3 cursor-pointer hover:bg-amber-50 transition-colors ${
+                      !notif.isRead ? "bg-amber-50/60" : ""
                     }`}
                     onClick={() => !notif.isRead && handleMarkRead(notif.id)}
                     onKeyDown={(e) =>
@@ -96,7 +96,7 @@ export function NotificationBell() {
                   >
                     <div className="flex items-start gap-2">
                       {!notif.isRead && (
-                        <div className="mt-1.5 h-2 w-2 rounded-full bg-neon-peach shrink-0" />
+                        <div className="mt-1.5 h-2 w-2 rounded-full bg-amber-500 shrink-0" />
                       )}
                       <div className={!notif.isRead ? "" : "pl-4"}>
                         <p className="text-sm text-foreground leading-snug">

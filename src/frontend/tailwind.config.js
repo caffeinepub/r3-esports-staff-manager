@@ -16,9 +16,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Satoshi', 'system-ui', 'sans-serif'],
-        display: ['BricolageGrotesque', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
+        sans: ["Satoshi", "system-ui", "sans-serif"],
+        display: ["BricolageGrotesque", "system-ui", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"],
       },
       colors: {
         border: "oklch(var(--border))",
@@ -71,22 +71,22 @@ export default {
           border: "oklch(var(--sidebar-border))",
           ring: "oklch(var(--sidebar-ring))",
         },
-        // Gaming accent palette - peach & yellow
+        // Gold & White accent palette
         neon: {
-          peach: "oklch(0.75 0.20 45)",
-          yellow: "oklch(0.78 0.18 85)",
-          amber: "oklch(0.72 0.20 65)",
+          peach: "oklch(0.68 0.16 82)",
+          yellow: "oklch(0.80 0.18 88)",
+          amber: "oklch(0.72 0.17 72)",
         },
         gaming: {
-          dark: "oklch(0.10 0.015 50)",
-          darker: "oklch(0.08 0.012 50)",
-          card: "oklch(0.14 0.018 50)",
-          border: "oklch(0.22 0.025 50)",
-          online: "oklch(0.65 0.18 145)",
-          offline: "oklch(0.60 0.22 25)",
-          gold: "oklch(0.78 0.18 70)",
-          warning: "oklch(0.78 0.18 70)",
-          danger: "oklch(0.60 0.22 25)",
+          dark: "oklch(0.97 0.008 80)",
+          darker: "oklch(1.0 0.0 0)",
+          card: "oklch(1.0 0.0 0)",
+          border: "oklch(0.88 0.05 82)",
+          online: "oklch(0.55 0.18 145)",
+          offline: "oklch(0.55 0.22 25)",
+          gold: "oklch(0.68 0.16 82)",
+          warning: "oklch(0.68 0.16 82)",
+          danger: "oklch(0.55 0.22 25)",
         },
       },
       borderRadius: {
@@ -96,9 +96,9 @@ export default {
       },
       boxShadow: {
         xs: "0 1px 2px 0 rgba(0,0,0,0.05)",
-        neon: "0 0 0 1px oklch(0.75 0.20 45), 0 0 20px oklch(0.75 0.20 45 / 0.15)",
-        "neon-yellow": "0 0 0 1px oklch(0.78 0.18 85), 0 0 20px oklch(0.78 0.18 85 / 0.2)",
-        "neon-amber": "0 0 0 1px oklch(0.72 0.20 65), 0 0 20px oklch(0.72 0.20 65 / 0.15)",
+        neon: "0 0 0 1px oklch(0.68 0.16 82), 0 0 20px oklch(0.68 0.16 82 / 0.15)",
+        "neon-yellow": "0 0 0 1px oklch(0.80 0.18 88), 0 0 20px oklch(0.80 0.18 88 / 0.20)",
+        "neon-amber": "0 0 0 1px oklch(0.72 0.17 72), 0 0 20px oklch(0.72 0.17 72 / 0.15)",
       },
       keyframes: {
         "accordion-down": {
