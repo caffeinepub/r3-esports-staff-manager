@@ -1,6 +1,6 @@
 import { type ReactNode, createContext, useContext, useState } from "react";
 
-export type UserRole = "owner" | "staff";
+export type UserRole = "owner" | "seniorAdmin" | "staff";
 
 export interface AuthState {
   userId: bigint | null;
@@ -17,6 +17,7 @@ interface AuthContextValue extends AuthState {
   canSendAnnouncements: boolean;
   canViewPasswords: boolean;
   canDemote: (targetRole: string) => boolean;
+  canIssueWarning: (targetRole: string) => boolean;
   canChangePasswordFor: (targetRole: string) => boolean;
 }
 
@@ -86,12 +87,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAuthenticated = auth.userId !== null;
   const role = auth.role;
 
-  const canManageStaff = role === "owner";
-  const canSendAnnouncements = role === "owner";
+  // Owner and SeniorAdmin can manage staff (view user list, demotion panel)
+  const canManageStaff = role === "owner" || role === "seniorAdmin";
+  // Owner and SeniorAdmin can send announcements
+  const canSendAnnouncements = role === "owner" || role === "seniorAdmin";
+  // Only owners can view the passwords tab
   const canViewPasswords = role === "owner";
 
   const canDemote = (targetRole: string) => {
     if (role === "owner") return targetRole !== "owner";
+    if (role === "seniorAdmin") return targetRole === "staff";
+    return false;
+  };
+
+  const canIssueWarning = (targetRole: string) => {
+    if (role === "owner") return targetRole !== "owner";
+    if (role === "seniorAdmin") return targetRole === "staff";
     return false;
   };
 
@@ -112,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         canSendAnnouncements,
         canViewPasswords,
         canDemote,
+        canIssueWarning,
         canChangePasswordFor,
       }}
     >

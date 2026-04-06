@@ -145,6 +145,26 @@ export function useDemoteUser() {
   });
 }
 
+export function useIssueWarning() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      initiatorId,
+      targetId,
+    }: { initiatorId: bigint; targetId: bigint }) => {
+      if (!actor) throw new Error("No actor");
+      const result = await (actor as any).issueWarning(initiatorId, targetId);
+      if (result.__kind__ === "err") throw new Error(result.err);
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["attendanceBoard"] });
+      queryClient.invalidateQueries({ queryKey: ["allUsers"] });
+    },
+  });
+}
+
 export function useMarkNotificationRead() {
   const { actor } = useActor();
   const { userId } = useAuth();

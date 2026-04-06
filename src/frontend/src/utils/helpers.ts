@@ -24,6 +24,8 @@ export function getRoleLabel(role: string): string {
   switch (role) {
     case "owner":
       return "Owner";
+    case "seniorAdmin":
+      return "Senior Admin";
     case "staff":
       return "Staff";
     default:
@@ -34,11 +36,13 @@ export function getRoleLabel(role: string): string {
 export function getRoleColor(role: string): string {
   switch (role) {
     case "owner":
-      return "text-yellow-400 bg-yellow-900/30 border border-yellow-700/50";
+      return "text-yellow-700 bg-yellow-100 border border-yellow-300";
+    case "seniorAdmin":
+      return "text-amber-700 bg-amber-100 border border-amber-300";
     case "staff":
-      return "text-slate-300 bg-slate-800/50 border border-slate-700/50";
+      return "text-slate-600 bg-slate-100 border border-slate-300";
     default:
-      return "text-slate-300 bg-slate-800/50 border border-slate-700/50";
+      return "text-slate-600 bg-slate-100 border border-slate-300";
   }
 }
 

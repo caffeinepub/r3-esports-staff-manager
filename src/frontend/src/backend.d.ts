@@ -31,6 +31,7 @@ export interface Notification {
 }
 export enum UserRole {
     owner = "owner",
+    seniorAdmin = "seniorAdmin",
     staff = "staff"
 }
 export enum UserRole__1 {
@@ -43,6 +44,13 @@ export interface backendInterface {
     checkIn(userId: bigint): Promise<void>;
     checkOut(userId: bigint): Promise<void>;
     demoteUser(initiatorUserId: bigint, targetUserId: bigint): Promise<{
+        __kind__: "ok";
+        ok: null;
+    } | {
+        __kind__: "err";
+        err: string;
+    }>;
+    issueWarning(initiatorUserId: bigint, targetUserId: bigint): Promise<{
         __kind__: "ok";
         ok: null;
     } | {

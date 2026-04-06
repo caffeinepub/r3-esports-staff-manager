@@ -59,9 +59,10 @@ actor {
   let notifications = Map.empty<Nat, [Notification]>();
   let announcements = Map.empty<Nat, Announcement>();
 
+  // #admin is treated as #staff; #seniorAdmin is its own tier
   func normalizeRole(role : UserRole) : UserRole {
     switch (role) {
-      case (#seniorAdmin or #admin) { #staff };
+      case (#admin) { #staff };
       case (other) { other };
     };
   };
@@ -69,6 +70,7 @@ actor {
   func roleToText(role : UserRole) : Text {
     switch (normalizeRole(role)) {
       case (#owner) { "owner" };
+      case (#seniorAdmin) { "seniorAdmin" };
       case (_) { "staff" };
     };
   };
@@ -239,7 +241,6 @@ actor {
 
   func getFixedPassword(id : Nat) : Text {
     if (id == 0) { return "Staff_Member_0" };
-    // Use Nat.sub to avoid trap warning; id > 0 is guaranteed above
     let idx = Nat.sub(id, 1);
     if (idx < FIXED_PASSWORDS.size()) {
       FIXED_PASSWORDS[idx];
@@ -255,12 +256,26 @@ actor {
     };
   };
 
+  func isOwnerOrSenior(role : UserRole) : Bool {
+    switch (normalizeRole(role)) {
+      case (#owner or #seniorAdmin) { true };
+      case (_) { false };
+    };
+  };
+
   func canDemote(actorRole : UserRole, targetRole : UserRole) : Bool {
     switch (normalizeRole(actorRole)) {
       case (#owner) {
         switch (normalizeRole(targetRole)) {
           case (#owner) { false };
           case (_) { true };
+        };
+      };
+      case (#seniorAdmin) {
+        // seniorAdmin can only demote/warn regular staff
+        switch (normalizeRole(targetRole)) {
+          case (#staff) { true };
+          case (_) { false };
         };
       };
       case (_) { false };
@@ -290,22 +305,43 @@ actor {
   };
 
   func migrateRoles() {
+    // Restore SeniorAdmin1-10 (ids 5-14) back to #seniorAdmin
     for ((userId, user) in users.entries()) {
-      switch (user.role) {
-        case (#seniorAdmin or #admin) {
-          let migrated : UserProfile = {
-            id = user.id;
-            username = user.username;
-            password = user.password;
-            role = #staff;
-            lastCheckIn = user.lastCheckIn;
-            inactivityWarnings = user.inactivityWarnings;
-            demotionWarning = user.demotionWarning;
-            isOnline = user.isOnline;
+      if (userId >= 5 and userId <= 14) {
+        switch (user.role) {
+          case (#staff) {
+            let restored : UserProfile = {
+              id = user.id;
+              username = user.username;
+              password = user.password;
+              role = #seniorAdmin;
+              lastCheckIn = user.lastCheckIn;
+              inactivityWarnings = user.inactivityWarnings;
+              demotionWarning = user.demotionWarning;
+              isOnline = user.isOnline;
+            };
+            users.add(userId, restored);
           };
-          users.add(userId, migrated);
+          case (_) {};
         };
-        case (_) {};
+      } else {
+        // Normalize any remaining admin -> staff
+        switch (user.role) {
+          case (#admin) {
+            let migrated : UserProfile = {
+              id = user.id;
+              username = user.username;
+              password = user.password;
+              role = #staff;
+              lastCheckIn = user.lastCheckIn;
+              inactivityWarnings = user.inactivityWarnings;
+              demotionWarning = user.demotionWarning;
+              isOnline = user.isOnline;
+            };
+            users.add(userId, migrated);
+          };
+          case (_) {};
+        };
       };
     };
     rolesMigrated := true;
@@ -341,7 +377,7 @@ actor {
       let username = "SeniorAdmin" # i.toText();
       let password = getFixedPassword(id);
       let user : UserProfile = {
-        id; username; password; role = #staff;
+        id; username; password; role = #seniorAdmin;
         lastCheckIn = 0; inactivityWarnings = 0;
         demotionWarning = false; isOnline = false;
       };
@@ -512,7 +548,7 @@ actor {
         };
         users.add(userId, updated);
         for ((uid, u) in users.entries()) {
-          if (isOwner(u.role)) {
+          if (isOwnerOrSenior(u.role)) {
             addNotification(uid, user.username # " has been inactive for 7+ days and is marked for demotion");
           };
         };
@@ -536,7 +572,7 @@ actor {
         switch (users.get(sessionUserId)) {
           case (null) { Runtime.trap("Session user not found") };
           case (?sessionUser) {
-            if (sessionUserId != userId and not isOwner(sessionUser.role)) {
+            if (sessionUserId != userId and not isOwnerOrSenior(sessionUser.role)) {
               Runtime.trap("Unauthorized: Can only view your own notifications");
             };
             switch (notifications.get(userId)) {
@@ -579,8 +615,8 @@ actor {
         switch (users.get(userId)) {
           case (null) { #err("User not found") };
           case (?user) {
-            if (not isOwner(user.role)) {
-              return #err("Unauthorized: Only owners can send announcements");
+            if (not isOwnerOrSenior(user.role)) {
+              return #err("Unauthorized: Only owners and senior admins can send announcements");
             };
             let announcement : Announcement = {
               id = nextAnnouncementId;
@@ -604,7 +640,7 @@ actor {
     announcements.values().toArray();
   };
 
-  // DEMOTION
+  // DEMOTION / WARNING
   public shared ({ caller }) func demoteUser(initiatorUserId : Nat, targetUserId : Nat) : async { #ok; #err : Text } {
     switch (sessions.get(caller)) {
       case (null) { #err("Unauthorized: Not logged in") };
@@ -637,6 +673,43 @@ actor {
     };
   };
 
+  // ISSUE WARNING (manual inactivity warning by owner or seniorAdmin)
+  public shared ({ caller }) func issueWarning(initiatorUserId : Nat, targetUserId : Nat) : async { #ok; #err : Text } {
+    switch (sessions.get(caller)) {
+      case (null) { #err("Unauthorized: Not logged in") };
+      case (?sessionUserId) {
+        if (sessionUserId != initiatorUserId) {
+          return #err("Unauthorized: initiatorUserId mismatch");
+        };
+        switch (users.get(initiatorUserId)) {
+          case (null) { #err("Initiator user not found") };
+          case (?initiator) {
+            if (not isOwnerOrSenior(initiator.role)) {
+              return #err("Unauthorized: Only owners and senior admins can issue warnings");
+            };
+            switch (users.get(targetUserId)) {
+              case (null) { #err("Target user not found") };
+              case (?target) {
+                if (not canDemote(initiator.role, target.role)) {
+                  return #err("Unauthorized: Cannot warn this user");
+                };
+                let updated : UserProfile = {
+                  id = target.id; username = target.username; password = target.password;
+                  role = target.role; lastCheckIn = target.lastCheckIn;
+                  inactivityWarnings = target.inactivityWarnings + 1;
+                  demotionWarning = target.demotionWarning; isOnline = target.isOnline;
+                };
+                users.add(targetUserId, updated);
+                addNotification(targetUserId, "You have received a warning from " # initiator.username);
+                #ok;
+              };
+            };
+          };
+        };
+      };
+    };
+  };
+
   public query func getDemotionCandidates() : async [UserProfile] {
     users.values().toArray().filter<UserProfile>(func(u : UserProfile) : Bool { u.demotionWarning });
   };
@@ -652,8 +725,8 @@ actor {
         switch (users.get(requesterId)) {
           case (null) { #err("Requester not found") };
           case (?requester) {
-            if (not isOwner(requester.role)) {
-              return #err("Unauthorized: Only owners can view all users");
+            if (not isOwnerOrSenior(requester.role)) {
+              return #err("Unauthorized: Only owners and senior admins can view all users");
             };
             #ok(users.values().toArray());
           };
@@ -766,7 +839,6 @@ actor {
             if (user.password != currentPassword) {
               return #err("Current password is incorrect");
             };
-            // Use dot-notation trim as required by this Motoko version
             let trimmed = newUsername.trim(#char ' ');
             if (trimmed.size() < 3) {
               return #err("Username must be at least 3 characters");
@@ -781,7 +853,6 @@ actor {
               case (?_) { return #err("Username is already taken") };
               case (null) {};
             };
-            // remove() returns ?V; ignore the result
             ignore usersByUsername.remove(user.username);
             usersByUsername.add(trimmed, userId);
             let updated : UserProfile = {

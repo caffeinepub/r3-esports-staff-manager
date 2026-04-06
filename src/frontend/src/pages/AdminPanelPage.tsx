@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  AlertTriangle,
   Check,
   Copy,
   Download,
@@ -24,6 +25,7 @@ import {
   useAllUsers,
   useDemoteUser,
   useDemotionCandidates,
+  useIssueWarning,
 } from "../hooks/useQueries";
 import {
   getAvatarColor,
@@ -33,7 +35,8 @@ import {
 } from "../utils/helpers";
 
 export function AdminPanelPage() {
-  const { userId, canDemote } = useAuth();
+  const { userId, role, canDemote, canIssueWarning, canViewPasswords } =
+    useAuth();
   const [tab, setTab] = useState("users");
   const [search, setSearch] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -47,9 +50,13 @@ export function AdminPanelPage() {
   } | null>(null);
 
   const allUsersResult = useAllUsers(userId);
-  const allPasswordsResult = useAllPasswords(userId, tab === "passwords");
+  const allPasswordsResult = useAllPasswords(
+    userId,
+    tab === "passwords" && canViewPasswords,
+  );
   const demotionCandidates = useDemotionCandidates();
   const demoteUser = useDemoteUser();
+  const issueWarning = useIssueWarning();
 
   const users: UserProfile[] =
     allUsersResult.data?.__kind__ === "ok" ? allUsersResult.data.ok : [];
@@ -64,7 +71,9 @@ export function AdminPanelPage() {
   const filteredUsers = users.filter(
     (u) =>
       u.username.toLowerCase().includes(search.toLowerCase()) ||
-      u.role.toLowerCase().includes(search.toLowerCase()),
+      (u.role as unknown as string)
+        .toLowerCase()
+        .includes(search.toLowerCase()),
   );
 
   const filteredPasswords = passwords.filter((p) =>
@@ -73,12 +82,24 @@ export function AdminPanelPage() {
 
   const handleDemote = async (targetId: bigint, targetUsername: string) => {
     if (!userId) return;
-    if (!confirm(`Demote ${targetUsername}? This cannot be undone.`)) return;
+    if (!confirm(`Demote ${targetUsername}? This will flag them for demotion.`))
+      return;
     try {
       await demoteUser.mutateAsync({ initiatorId: userId, targetId });
-      toast.success(`${targetUsername} demoted.`);
+      toast.success(`${targetUsername} flagged for demotion.`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Demote failed");
+    }
+  };
+
+  const handleWarn = async (targetId: bigint, targetUsername: string) => {
+    if (!userId) return;
+    if (!confirm(`Issue a warning to ${targetUsername}?`)) return;
+    try {
+      await issueWarning.mutateAsync({ initiatorId: userId, targetId });
+      toast.success(`Warning issued to ${targetUsername}.`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Warning failed");
     }
   };
 
@@ -96,7 +117,7 @@ export function AdminPanelPage() {
       byRole[p.role].push({ username: p.username, password: p.password });
     }
 
-    const order = ["owner", "staff"];
+    const order = ["owner", "seniorAdmin", "staff"];
     let output = "=== R3 ESPORTS STAFF CREDENTIALS ===\n\n";
     for (const r of order) {
       const group = byRole[r];
@@ -127,10 +148,12 @@ export function AdminPanelPage() {
         transition={{ duration: 0.3 }}
       >
         <h1 className="font-display font-bold text-2xl text-foreground">
-          Admin Panel
+          {role === "seniorAdmin" ? "Senior Admin Panel" : "Admin Panel"}
         </h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Manage all clan members and credentials
+          {role === "seniorAdmin"
+            ? "Send announcements, issue warnings, and flag staff for demotion"
+            : "Manage all clan members and credentials"}
         </p>
       </motion.div>
 
@@ -149,13 +172,15 @@ export function AdminPanelPage() {
               >
                 <Users className="h-3.5 w-3.5" /> All Users
               </TabsTrigger>
-              <TabsTrigger
-                value="passwords"
-                className="data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700 gap-1.5"
-                data-ocid="admin.passwords.tab"
-              >
-                <KeyRound className="h-3.5 w-3.5" /> Passwords
-              </TabsTrigger>
+              {canViewPasswords && (
+                <TabsTrigger
+                  value="passwords"
+                  className="data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700 gap-1.5"
+                  data-ocid="admin.passwords.tab"
+                >
+                  <KeyRound className="h-3.5 w-3.5" /> Passwords
+                </TabsTrigger>
+              )}
               <TabsTrigger
                 value="demotion"
                 className="data-[state=active]:bg-red-100 data-[state=active]:text-red-600 gap-1.5"
@@ -235,7 +260,10 @@ export function AdminPanelPage() {
                         {filteredUsers.map((user, idx) => {
                           const userRoleStr = user.role as unknown as string;
                           const showDemote = canDemote(userRoleStr);
-                          const showChangePw = userRoleStr !== "owner";
+                          const showWarn = canIssueWarning(userRoleStr);
+                          const showChangePw =
+                            canViewPasswords && userRoleStr !== "owner";
+                          const showRename = role === "owner";
                           return (
                             <tr
                               key={user.id.toString()}
@@ -285,13 +313,12 @@ export function AdminPanelPage() {
                                 <div className="flex items-center gap-1">
                                   {Number(user.inactivityWarnings) > 0 && (
                                     <span className="text-xs text-yellow-600">
-                                      \u26a0\ufe0f{" "}
-                                      {user.inactivityWarnings.toString()}
+                                      ⚠️ {user.inactivityWarnings.toString()}
                                     </span>
                                   )}
                                   {user.demotionWarning && (
                                     <span className="text-xs text-red-600 ml-1">
-                                      \ud83d\udea8 Demotion
+                                      🚨 Demotion
                                     </span>
                                   )}
                                   {Number(user.inactivityWarnings) === 0 &&
@@ -304,19 +331,35 @@ export function AdminPanelPage() {
                               </td>
                               <td className="px-4 py-3">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      setChangeNameTarget({
-                                        id: user.id,
-                                        username: user.username,
-                                      })
-                                    }
-                                    className="text-xs text-amber-600 hover:text-amber-700 font-medium transition-colors flex items-center gap-1"
-                                    data-ocid={`admin.users.rename_button.${idx + 1}`}
-                                  >
-                                    <UserPen className="h-3.5 w-3.5" /> Rename
-                                  </button>
+                                  {showRename && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setChangeNameTarget({
+                                          id: user.id,
+                                          username: user.username,
+                                        })
+                                      }
+                                      className="text-xs text-amber-600 hover:text-amber-700 font-medium transition-colors flex items-center gap-1"
+                                      data-ocid={`admin.users.rename_button.${idx + 1}`}
+                                    >
+                                      <UserPen className="h-3.5 w-3.5" /> Rename
+                                    </button>
+                                  )}
+                                  {showWarn && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleWarn(user.id, user.username)
+                                      }
+                                      disabled={issueWarning.isPending}
+                                      className="text-xs text-yellow-600 hover:text-yellow-700 font-medium transition-colors flex items-center gap-1 disabled:opacity-40"
+                                      data-ocid={`admin.users.warn_button.${idx + 1}`}
+                                    >
+                                      <AlertTriangle className="h-3.5 w-3.5" />{" "}
+                                      Warn
+                                    </button>
+                                  )}
                                   {showDemote && (
                                     <button
                                       type="button"
@@ -360,127 +403,129 @@ export function AdminPanelPage() {
             </div>
           </TabsContent>
 
-          {/* Passwords Tab */}
-          <TabsContent value="passwords">
-            <div className="mb-4 rounded-lg bg-amber-50 border border-amber-300 px-4 py-3 flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-amber-700">
-                  \ud83d\udc51 Owner Credentials View
-                </p>
-                <p className="text-xs text-amber-600/80 mt-0.5">
-                  Below are ALL account credentials. Export and distribute to
-                  your staff.
-                </p>
+          {/* Passwords Tab - Owners only */}
+          {canViewPasswords && (
+            <TabsContent value="passwords">
+              <div className="mb-4 rounded-lg bg-amber-50 border border-amber-300 px-4 py-3 flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold text-amber-700">
+                    👑 Owner Credentials View
+                  </p>
+                  <p className="text-xs text-amber-600/80 mt-0.5">
+                    Below are ALL account credentials. Export and distribute to
+                    your staff.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={handleExport}
+                  className="btn-gradient text-white shrink-0"
+                  data-ocid="admin.passwords.export.button"
+                >
+                  <Download className="mr-1.5 h-3.5 w-3.5" /> Export All
+                </Button>
               </div>
-              <Button
-                size="sm"
-                onClick={handleExport}
-                className="btn-gradient text-white shrink-0"
-                data-ocid="admin.passwords.export.button"
-              >
-                <Download className="mr-1.5 h-3.5 w-3.5" /> Export All
-              </Button>
-            </div>
 
-            <div className="neon-border-gradient">
-              <div className="rounded-lg bg-white border border-amber-200/60 overflow-hidden shadow-sm">
-                {allPasswordsResult.isLoading ? (
-                  <div
-                    className="flex items-center justify-center py-16"
-                    data-ocid="admin.passwords.loading_state"
-                  >
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : allPasswordsResult.data?.__kind__ === "err" ? (
-                  <div
-                    className="py-8 text-center text-destructive text-sm"
-                    data-ocid="admin.passwords.error_state"
-                  >
-                    {allPasswordsResult.data.err}
-                  </div>
-                ) : filteredPasswords.length === 0 ? (
-                  <div
-                    className="py-12 text-center text-muted-foreground text-sm"
-                    data-ocid="admin.passwords.empty_state"
-                  >
-                    No passwords found.
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table
-                      className="w-full text-sm"
-                      data-ocid="admin.passwords.table"
+              <div className="neon-border-gradient">
+                <div className="rounded-lg bg-white border border-amber-200/60 overflow-hidden shadow-sm">
+                  {allPasswordsResult.isLoading ? (
+                    <div
+                      className="flex items-center justify-center py-16"
+                      data-ocid="admin.passwords.loading_state"
                     >
-                      <thead>
-                        <tr className="border-b border-amber-200/60 bg-amber-50/60">
-                          <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                            Username
-                          </th>
-                          <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                            Role
-                          </th>
-                          <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                            Password
-                          </th>
-                          <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                            Copy
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-amber-100">
-                        {filteredPasswords.map((p, idx) => {
-                          const copyId = `${p.username}-${idx}`;
-                          return (
-                            <tr
-                              key={copyId}
-                              className="hover:bg-amber-50/40 transition-colors"
-                              data-ocid={`admin.passwords.row.${idx + 1}`}
-                            >
-                              <td className="px-4 py-3 font-medium text-foreground">
-                                {p.username}
-                              </td>
-                              <td className="px-4 py-3">
-                                <span
-                                  className={`text-xs px-2 py-0.5 rounded-full font-medium ${getRoleColor(p.role)}`}
-                                >
-                                  {getRoleLabel(p.role)}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3">
-                                <code className="text-xs font-mono text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                                  {p.password}
-                                </code>
-                              </td>
-                              <td className="px-4 py-3">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleCopy(
-                                      `${p.username} | ${p.password}`,
-                                      copyId,
-                                    )
-                                  }
-                                  className="p-1.5 rounded hover:bg-amber-50 text-muted-foreground hover:text-amber-600 transition-colors"
-                                  data-ocid={`admin.passwords.copy.button.${idx + 1}`}
-                                  title="Copy credentials"
-                                >
-                                  {copiedId === copyId ? (
-                                    <Check className="h-3.5 w-3.5 text-gaming-online" />
-                                  ) : (
-                                    <Copy className="h-3.5 w-3.5" />
-                                  )}
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : allPasswordsResult.data?.__kind__ === "err" ? (
+                    <div
+                      className="py-8 text-center text-destructive text-sm"
+                      data-ocid="admin.passwords.error_state"
+                    >
+                      {allPasswordsResult.data.err}
+                    </div>
+                  ) : filteredPasswords.length === 0 ? (
+                    <div
+                      className="py-12 text-center text-muted-foreground text-sm"
+                      data-ocid="admin.passwords.empty_state"
+                    >
+                      No passwords found.
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table
+                        className="w-full text-sm"
+                        data-ocid="admin.passwords.table"
+                      >
+                        <thead>
+                          <tr className="border-b border-amber-200/60 bg-amber-50/60">
+                            <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                              Username
+                            </th>
+                            <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                              Role
+                            </th>
+                            <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                              Password
+                            </th>
+                            <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                              Copy
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-amber-100">
+                          {filteredPasswords.map((p, idx) => {
+                            const copyId = `${p.username}-${idx}`;
+                            return (
+                              <tr
+                                key={copyId}
+                                className="hover:bg-amber-50/40 transition-colors"
+                                data-ocid={`admin.passwords.row.${idx + 1}`}
+                              >
+                                <td className="px-4 py-3 font-medium text-foreground">
+                                  {p.username}
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span
+                                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${getRoleColor(p.role)}`}
+                                  >
+                                    {getRoleLabel(p.role)}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <code className="text-xs font-mono text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                    {p.password}
+                                  </code>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleCopy(
+                                        `${p.username} | ${p.password}`,
+                                        copyId,
+                                      )
+                                    }
+                                    className="p-1.5 rounded hover:bg-amber-50 text-muted-foreground hover:text-amber-600 transition-colors"
+                                    data-ocid={`admin.passwords.copy.button.${idx + 1}`}
+                                    title="Copy credentials"
+                                  >
+                                    {copiedId === copyId ? (
+                                      <Check className="h-3.5 w-3.5 text-gaming-online" />
+                                    ) : (
+                                      <Copy className="h-3.5 w-3.5" />
+                                    )}
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </TabsContent>
+            </TabsContent>
+          )}
 
           {/* Demotion Candidates Tab */}
           <TabsContent value="demotion">
@@ -506,7 +551,7 @@ export function AdminPanelPage() {
                 ) : (
                   <div className="overflow-x-auto">
                     <div className="px-4 py-3 bg-red-50 border-b border-red-200 text-sm text-red-600">
-                      \ud83d\udea8 {candidates.length} member
+                      🚨 {candidates.length} member
                       {candidates.length > 1 ? "s" : ""} have been inactive for
                       7+ days
                     </div>
@@ -560,8 +605,7 @@ export function AdminPanelPage() {
                             </td>
                             <td className="px-4 py-3">
                               <span className="text-xs text-red-600">
-                                \ud83d\udea8 {c.inactivityWarnings.toString()}{" "}
-                                warnings
+                                🚨 {c.inactivityWarnings.toString()} warnings
                               </span>
                             </td>
                             <td className="px-4 py-3">

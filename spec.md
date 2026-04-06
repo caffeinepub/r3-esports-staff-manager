@@ -1,33 +1,45 @@
 # R3 Esports Staff Manager
 
 ## Current State
-The app has Owner and Staff roles. Users can change their own passwords via a key icon in the header. Owners can change any user's password from the Admin Panel. Usernames are fixed and cannot be changed.
+- Two roles: owner and staff
+- SeniorAdmin1-10 accounts exist with staff role
+- Only owners can send announcements, issue warnings, and demote users
+- Frontend AuthContext has `canSendAnnouncements` and `canDemote` locked to owner only
 
 ## Requested Changes (Diff)
 
 ### Add
-- `changeUsername(userId, currentPassword, newUsername)` backend function — allows a logged-in user to change their own username (requires password confirmation, rejects duplicates)
-- `adminChangeUsername(requesterId, targetUserId, newUsername)` backend function — Owner-only, changes any user's username
-- `ChangeUsernameDialog` frontend component — modal with current password + new username fields (self-service)
-- Pencil/edit icon button in the Layout header next to the key icon, opens ChangeUsernameDialog
-- "Change Name" button in Admin Panel All Users tab (Owner only), opens an admin username change dialog
-- `useChangeUsername` and `useAdminChangeUsername` mutation hooks in useQueries.ts
-- Auth context `updateUsername` method so the header reflects the new name immediately after a self-service change
+- Reintroduce `seniorAdmin` as a distinct role in the Motoko backend
+- SeniorAdmin1-10 accounts get the `seniorAdmin` role (restored from staff)
+- `seniorAdmin` users can: send announcements, issue demotion warnings, trigger inactivity warnings
+- Backend `sendAnnouncement` allows seniorAdmin callers
+- Backend `demoteUser` allows seniorAdmin callers to demote staff (not owner or other seniorAdmins)
+- Frontend: `canSendAnnouncements` = true for seniorAdmin
+- Frontend: `canDemote` returns true for seniorAdmin targeting staff
+- Frontend: Admin Panel shows demotion controls for seniorAdmin on staff rows
+- Navigation: SeniorAdmin users see the Admin Panel link (limited to demotion/users tab only)
 
 ### Modify
-- `Layout.tsx` — add pencil icon button and `ChangeUsernameDialog`
-- `AdminPanelPage.tsx` — add "Change Name" button per row, wire admin username change dialog
-- `AuthContext.tsx` — expose `updateUsername(newUsername)` to update local state
-- `useQueries.ts` — add two new mutation hooks
+- `normalizeRole` should NOT collapse seniorAdmin to staff anymore
+- `roleToText` returns "seniorAdmin" for seniorAdmin
+- `canDemote` backend function: seniorAdmin can demote staff only
+- `isOwnerOrSenior` helper for announcement permission checks
+- `initializeAccounts`: SeniorAdmin1-10 get `#seniorAdmin` role
+- `migrateRoles`: no longer collapse seniorAdmin -> staff (restore them)
+- AuthContext: UserRole type includes seniorAdmin
+- AdminPanelPage: seniorAdmin can access users and demotion tabs, but not passwords tab
 
 ### Remove
 - Nothing removed
 
 ## Implementation Plan
-1. Add `changeUsername` and `adminChangeUsername` to `src/backend/main.mo`, updating `usersByUsername` map to remove old key and add new key
-2. Add `updateUsername` to AuthContext
-3. Add `useChangeUsername` and `useAdminChangeUsername` hooks to `useQueries.ts`
-4. Create `src/frontend/src/components/ChangeUsernameDialog.tsx` (self-service — requires current password)
-5. Create `src/frontend/src/components/AdminChangeUsernameDialog.tsx` (Owner only — no password needed)
-6. Update `Layout.tsx` to include pencil icon and `ChangeUsernameDialog`
-7. Update `AdminPanelPage.tsx` to add "Change Name" button and wire `AdminChangeUsernameDialog`
+1. Backend: Add #seniorAdmin variant to UserRole type
+2. Backend: Remove seniorAdmin from normalizeRole collapse, update roleToText
+3. Backend: Update canDemote - seniorAdmin can demote #staff only
+4. Backend: Update sendAnnouncement - allow seniorAdmin
+5. Backend: initializeAccounts - SeniorAdmin1-10 get #seniorAdmin
+6. Backend: migrateRoles - restore seniorAdmin accounts (set seniorAdmin role for id 5-14)
+7. Frontend AuthContext: add seniorAdmin to UserRole, update canSendAnnouncements, canDemote
+8. Frontend AdminPanelPage: show admin panel nav for seniorAdmin, hide passwords tab
+9. Frontend: update helpers getRoleLabel/getRoleColor for seniorAdmin display
+10. Validate and deploy
