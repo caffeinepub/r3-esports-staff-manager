@@ -31,7 +31,8 @@ export function LoginPage() {
     setError("");
     const result = await actor.login(u.trim(), p);
     if (result.__kind__ === "ok") {
-      login(result.ok.userId, u.trim(), result.ok.role);
+      // Pass password so it gets stored for auto-relogin after canister restarts
+      login(result.ok.userId, u.trim(), result.ok.role, p);
       toast.success(`Welcome back, ${u}!`);
       navigate({ to: "/" });
     } else {

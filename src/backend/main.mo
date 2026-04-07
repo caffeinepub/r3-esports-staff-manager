@@ -55,6 +55,9 @@ actor {
 
   // Stable session storage - survives canister upgrades
   stable var stableSessions : [(Principal, Nat)] = [];
+  // Stable access control state - survives canister upgrades
+  stable var stableAcAdminAssigned : Bool = false;
+  stable var stableAcUserRoles : [(Principal, AccessControl.UserRole)] = [];
 
   let users = Map.empty<Nat, UserProfile>();
   let usersByUsername = Map.empty<Text, Nat>();
@@ -352,13 +355,23 @@ actor {
 
   system func preupgrade() {
     stableSessions := sessions.entries().toArray();
+    // Persist access control state
+    stableAcAdminAssigned := accessControlState.adminAssigned;
+    stableAcUserRoles := accessControlState.userRoles.entries().toArray();
   };
+
   system func postupgrade() {
     // Restore sessions from stable storage
     for ((principal, userId) in stableSessions.vals()) {
       sessions.add(principal, userId);
     };
     stableSessions := [];
+    // Restore access control state
+    accessControlState.adminAssigned := stableAcAdminAssigned;
+    for ((principal, role) in stableAcUserRoles.vals()) {
+      accessControlState.userRoles.add(principal, role);
+    };
+    stableAcUserRoles := [];
     if (not initialized) {
       initializeAccounts();
     } else if (not rolesMigrated) {

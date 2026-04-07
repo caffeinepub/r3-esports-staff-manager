@@ -90,13 +90,13 @@ declare module "@tanstack/react-router" {
 }
 
 /**
- * Silently validates the backend session on mount.
- * If localStorage says "logged in" but the backend doesn't recognize the
- * caller's Principal (e.g. after a redeployment or browser session change),
- * it calls logout() so ProtectedLayout redirects to the login page.
+ * Validates the backend session on mount.
+ * If the backend session is gone (e.g. after a canister redeploy),
+ * it automatically re-establishes the session using stored credentials.
+ * Only falls back to logout() if re-login also fails.
  */
 function SessionValidator() {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, login, getStoredCredentials } = useAuth();
   const { actor, isFetching } = useActor();
   const checkedRef = useRef(false);
 
@@ -108,16 +108,56 @@ function SessionValidator() {
 
     actor
       .getCurrentUser()
-      .then((user) => {
+      .then(async (user) => {
         if (user === null || user === undefined) {
+          // Session is gone on the backend — try to auto-relogin
+          const creds = getStoredCredentials();
+          if (creds) {
+            try {
+              const result = await actor.login(creds.username, creds.password);
+              if (result.__kind__ === "ok") {
+                // Re-establish the auth state with fresh data from backend
+                login(
+                  result.ok.userId,
+                  creds.username,
+                  result.ok.role,
+                  creds.password,
+                );
+                // Session restored silently — no need to log out
+                return;
+              }
+            } catch {
+              // Re-login attempt failed
+            }
+          }
+          // No stored creds or re-login failed — force logout
           logout();
         }
       })
       .catch(() => {
-        // If the call itself errors, the session is definitely broken
-        logout();
+        // If the call itself errors, try auto-relogin before giving up
+        const creds = getStoredCredentials();
+        if (creds) {
+          actor
+            .login(creds.username, creds.password)
+            .then((result) => {
+              if (result.__kind__ === "ok") {
+                login(
+                  result.ok.userId,
+                  creds.username,
+                  result.ok.role,
+                  creds.password,
+                );
+              } else {
+                logout();
+              }
+            })
+            .catch(() => logout());
+        } else {
+          logout();
+        }
       });
-  }, [actor, isFetching, isAuthenticated, logout]);
+  }, [actor, isFetching, isAuthenticated, logout, login, getStoredCredentials]);
 
   return null;
 }

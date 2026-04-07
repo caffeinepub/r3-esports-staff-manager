@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import {
   AlertTriangle,
   Check,
@@ -8,12 +9,14 @@ import {
   Download,
   KeyRound,
   Loader2,
+  Megaphone,
+  Send,
   ShieldAlert,
   TrendingDown,
   UserPen,
   Users,
 } from "lucide-react";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { UserProfile } from "../backend";
@@ -23,11 +26,14 @@ import { useAuth } from "../context/AuthContext";
 import {
   useAllPasswords,
   useAllUsers,
+  useAnnouncements,
   useDemoteUser,
   useDemotionCandidates,
   useIssueWarning,
+  useSendAnnouncement,
 } from "../hooks/useQueries";
 import {
+  formatRelativeTime,
   getAvatarColor,
   getInitials,
   getRoleColor,
@@ -35,9 +41,17 @@ import {
 } from "../utils/helpers";
 
 export function AdminPanelPage() {
-  const { userId, role, canDemote, canIssueWarning, canViewPasswords } =
-    useAuth();
-  const [tab, setTab] = useState("users");
+  const {
+    userId,
+    role,
+    canDemote,
+    canIssueWarning,
+    canViewPasswords,
+    canSendAnnouncements,
+  } = useAuth();
+  const [tab, setTab] = useState(
+    canSendAnnouncements ? "announcements" : "users",
+  );
   const [search, setSearch] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [changePwTarget, setChangePwTarget] = useState<{
@@ -48,6 +62,7 @@ export function AdminPanelPage() {
     id: bigint;
     username: string;
   } | null>(null);
+  const [announcementMsg, setAnnouncementMsg] = useState("");
 
   const allUsersResult = useAllUsers(userId);
   const allPasswordsResult = useAllPasswords(
@@ -57,6 +72,9 @@ export function AdminPanelPage() {
   const demotionCandidates = useDemotionCandidates();
   const demoteUser = useDemoteUser();
   const issueWarning = useIssueWarning();
+  const { data: announcements = [], isLoading: announcementsLoading } =
+    useAnnouncements();
+  const sendAnnouncement = useSendAnnouncement();
 
   const users: UserProfile[] =
     allUsersResult.data?.__kind__ === "ok" ? allUsersResult.data.ok : [];
@@ -67,6 +85,10 @@ export function AdminPanelPage() {
       : [];
 
   const candidates = demotionCandidates.data ?? [];
+
+  const sortedAnnouncements = [...announcements].sort((a, b) =>
+    Number(b.timestamp - a.timestamp),
+  );
 
   const filteredUsers = users.filter(
     (u) =>
@@ -140,6 +162,26 @@ export function AdminPanelPage() {
     toast.success("Credentials exported!");
   };
 
+  const handleSendAnnouncement = async () => {
+    if (!userId || !announcementMsg.trim()) return;
+    try {
+      await sendAnnouncement.mutateAsync({
+        userId,
+        message: announcementMsg.trim(),
+      });
+      setAnnouncementMsg("");
+      toast.success("Announcement sent to all clan members!");
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Failed to send announcement";
+      if (msg.includes("Not logged in") || msg.includes("session")) {
+        toast.error("Your session expired. Please log out and log back in.");
+      } else {
+        toast.error(msg);
+      }
+    }
+  };
+
   return (
     <div className="space-y-6">
       <motion.div
@@ -164,7 +206,16 @@ export function AdminPanelPage() {
       >
         <Tabs value={tab} onValueChange={setTab} data-ocid="admin.panel">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
-            <TabsList className="bg-white border border-amber-200">
+            <TabsList className="bg-white border border-amber-200 flex-wrap h-auto gap-0.5">
+              {canSendAnnouncements && (
+                <TabsTrigger
+                  value="announcements"
+                  className="data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700 gap-1.5"
+                  data-ocid="admin.announcements.tab"
+                >
+                  <Megaphone className="h-3.5 w-3.5" /> Announcements
+                </TabsTrigger>
+              )}
               <TabsTrigger
                 value="users"
                 className="data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700 gap-1.5"
@@ -195,16 +246,129 @@ export function AdminPanelPage() {
               </TabsTrigger>
             </TabsList>
 
-            <div className="sm:ml-auto">
-              <Input
-                placeholder="Search..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="bg-white border-amber-200 w-full sm:w-52 focus:border-amber-400"
-                data-ocid="admin.search_input"
-              />
-            </div>
+            {tab !== "announcements" && (
+              <div className="sm:ml-auto">
+                <Input
+                  placeholder="Search..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="bg-white border-amber-200 w-full sm:w-52 focus:border-amber-400"
+                  data-ocid="admin.search_input"
+                />
+              </div>
+            )}
           </div>
+
+          {/* Announcements Tab - Owners and Senior Admins */}
+          {canSendAnnouncements && (
+            <TabsContent value="announcements">
+              <div className="space-y-4">
+                {/* Composer */}
+                <div className="neon-border-gradient">
+                  <div className="rounded-lg bg-white border border-amber-200/60 p-5 shadow-sm">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Megaphone className="h-4 w-4 text-amber-600" />
+                      <h2 className="font-semibold text-sm text-foreground">
+                        New Announcement
+                      </h2>
+                    </div>
+                    <Textarea
+                      value={announcementMsg}
+                      onChange={(e) => setAnnouncementMsg(e.target.value)}
+                      placeholder="Write your announcement to all clan staff..."
+                      rows={4}
+                      className="bg-amber-50/40 border-amber-200 resize-none focus:border-amber-400 mb-3"
+                      data-ocid="admin.announcements.textarea"
+                    />
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        {announcementMsg.length} characters
+                      </span>
+                      <Button
+                        onClick={handleSendAnnouncement}
+                        disabled={
+                          !announcementMsg.trim() || sendAnnouncement.isPending
+                        }
+                        className="btn-gradient text-white"
+                        data-ocid="admin.announcements.submit_button"
+                      >
+                        {sendAnnouncement.isPending ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="mr-2 h-4 w-4" />
+                        )}
+                        Send Announcement
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Recent Announcements */}
+                <div>
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                    Recent Announcements
+                  </h3>
+                  {announcementsLoading ? (
+                    <div
+                      className="flex items-center justify-center py-12"
+                      data-ocid="admin.announcements.loading_state"
+                    >
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : sortedAnnouncements.length === 0 ? (
+                    <div
+                      className="rounded-lg bg-white border border-amber-200/60 py-12 text-center shadow-sm"
+                      data-ocid="admin.announcements.empty_state"
+                    >
+                      <Megaphone className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-30" />
+                      <p className="text-sm text-muted-foreground">
+                        No announcements yet. Be the first to send one above.
+                      </p>
+                    </div>
+                  ) : (
+                    <AnimatePresence mode="popLayout">
+                      {sortedAnnouncements.map((ann, idx) => (
+                        <motion.div
+                          key={ann.id.toString()}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.98 }}
+                          transition={{ duration: 0.2, delay: idx * 0.03 }}
+                          className="rounded-lg bg-white border border-amber-200/60 p-5 hover:border-amber-400/60 hover:shadow-sm transition-all shadow-xs mb-3"
+                          data-ocid={`admin.announcements.item.${idx + 1}`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={`h-9 w-9 rounded-full ${getAvatarColor(
+                                ann.authorUsername,
+                              )} flex items-center justify-center shrink-0 mt-0.5`}
+                            >
+                              <span className="text-xs font-bold text-white">
+                                {getInitials(ann.authorUsername)}
+                              </span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                                <span className="font-semibold text-sm text-foreground">
+                                  {ann.authorUsername}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  {formatRelativeTime(ann.timestamp)}
+                                </span>
+                              </div>
+                              <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                                {ann.message}
+                              </p>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+          )}
 
           {/* All Users Tab */}
           <TabsContent value="users">

@@ -1,25 +1,33 @@
 # R3 Esports Staff Manager
 
 ## Current State
-Senior Admin accounts (SeniorAdmin1-10) have correct backend permissions for sending announcements, issuing warnings, and flagging demotions. The frontend AuthContext correctly grants `canSendAnnouncements`, `canManageStaff`, `canDemote`, and `canIssueWarning` to the `seniorAdmin` role.
+Senior Admin accounts (SeniorAdmin1-10) have all the correct permissions in both backend and frontend code:
+- `canManageStaff` = true (Admin Panel nav link shows)
+- `canSendAnnouncements` = true (announcement composer shows)
+- `canIssueWarning` = true for staff targets
+- `canDemote` = true for staff targets
+- Backend `sendAnnouncement`, `issueWarning`, `demoteUser` all authorize `#seniorAdmin`
 
-However, the backend uses the caller's ICP Principal as the session key. When a user logs in, the backend maps their Principal -> userId. If the user's Principal changes (new browser, cleared cookies, app redeployment) or if the backend was upgraded (wiping in-memory sessions despite the stable session fix), the backend has no session for that Principal. The frontend still shows them as logged in (localStorage has their userId/role), but every action fails with "Unauthorized: Not logged in" or "userId mismatch".
+However, the root cause of persistent "can't perform actions" is: the backend uses the IC `caller` principal for sessions. All anonymous browser users share the same IC anonymous principal. When the canister restarts or is redeployed, the session is cleared. When the user refreshes or re-opens the app, localStorage has their auth data but the backend session is gone.
+
+The current `SessionValidator` detects stale sessions and logs the user out, but doesn't auto-recover. Users must log in again manually.
 
 ## Requested Changes (Diff)
 
 ### Add
-- Session validation hook: on app startup, after the actor is ready, call `getCurrentUser()` on the backend. If it returns null (no active backend session for the current Principal), clear the localStorage auth state and redirect to login.
-- A `SessionValidator` component that runs this check inside the AuthProvider.
+- Auto-relogin: when `SessionValidator` detects a stale session (getCurrentUser returns null) but the user has stored credentials, silently re-call `login()` on the backend to re-establish the session without forcing the user to the login screen.
+- Store credentials (encrypted in localStorage) to support auto-relogin.
+- Add an explicit "Announcements" section inside the Admin Panel page for Senior Admins so they can send announcements directly from the Admin Panel (not just the Announcements page).
 
 ### Modify
-- `App.tsx`: include the `SessionValidator` component so session is checked on load.
-- `AuthContext.tsx`: expose a `clearAuth` method (or reuse `logout`) for the validator to call.
+- `AuthContext`: store credentials on login for auto-relogin.
+- `SessionValidator` in App.tsx: attempt silent re-login before logging out.
+- `AdminPanelPage`: add an "Announcements" tab for owners and senior admins to send announcements directly.
 
 ### Remove
 - Nothing removed.
 
 ## Implementation Plan
-1. Add a `SessionValidator` component in `App.tsx` that uses the actor and auth context.
-2. When the actor is ready and user appears authenticated (has userId in localStorage), call `actor.getCurrentUser()`.
-3. If the result is null, call `logout()` to clear localStorage and return to login.
-4. This ensures stale sessions are detected immediately on load, fixing the "can't send announcements" issue for Senior Admins.
+1. Update `AuthContext` to store username/password in localStorage on login (needed for auto-relogin).
+2. Update `SessionValidator` in `App.tsx` to: detect stale session → attempt silent backend re-login with stored credentials → only logout if re-login fails.
+3. Add an "Announcements" tab to `AdminPanelPage` for owners and senior admins with the announcement composer inline.
