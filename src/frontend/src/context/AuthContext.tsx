@@ -22,6 +22,7 @@ interface AuthContextValue extends AuthState {
   canManageStaff: boolean;
   canSendAnnouncements: boolean;
   canViewPasswords: boolean;
+  canRenameUsers: boolean;
   canDemote: (targetRole: string) => boolean;
   canIssueWarning: (targetRole: string) => boolean;
   canChangePasswordFor: (targetRole: string) => boolean;
@@ -137,21 +138,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const canSendAnnouncements = role === "owner" || role === "seniorAdmin";
   // Only owners can view the passwords tab
   const canViewPasswords = role === "owner";
+  // Owners and Senior Admins can rename users
+  const canRenameUsers = role === "owner" || role === "seniorAdmin";
 
   const canDemote = (targetRole: string) => {
     if (role === "owner") return targetRole !== "owner";
-    if (role === "seniorAdmin") return targetRole === "staff";
+    if (role === "seniorAdmin")
+      return targetRole === "staff" || targetRole === "seniorAdmin";
     return false;
   };
 
   const canIssueWarning = (targetRole: string) => {
     if (role === "owner") return targetRole !== "owner";
-    if (role === "seniorAdmin") return targetRole === "staff";
+    if (role === "seniorAdmin")
+      return targetRole === "staff" || targetRole === "seniorAdmin";
     return false;
   };
 
-  const canChangePasswordFor = (_targetRole: string) => {
+  const canChangePasswordFor = (targetRole: string) => {
     if (role === "owner") return true;
+    if (role === "seniorAdmin") return targetRole !== "owner";
     return false;
   };
 
@@ -167,6 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         canManageStaff,
         canSendAnnouncements,
         canViewPasswords,
+        canRenameUsers,
         canDemote,
         canIssueWarning,
         canChangePasswordFor,

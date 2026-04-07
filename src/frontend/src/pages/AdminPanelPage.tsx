@@ -48,6 +48,8 @@ export function AdminPanelPage() {
     canIssueWarning,
     canViewPasswords,
     canSendAnnouncements,
+    canRenameUsers,
+    canChangePasswordFor,
   } = useAuth();
   const [tab, setTab] = useState(
     canSendAnnouncements ? "announcements" : "users",
@@ -194,7 +196,7 @@ export function AdminPanelPage() {
         </h1>
         <p className="text-sm text-muted-foreground mt-0.5">
           {role === "seniorAdmin"
-            ? "Send announcements, issue warnings, and flag staff for demotion"
+            ? "Manage clan members, send announcements, issue warnings, and demotions"
             : "Manage all clan members and credentials"}
         </p>
       </motion.div>
@@ -423,11 +425,18 @@ export function AdminPanelPage() {
                       <tbody className="divide-y divide-amber-100">
                         {filteredUsers.map((user, idx) => {
                           const userRoleStr = user.role as unknown as string;
-                          const showDemote = canDemote(userRoleStr);
-                          const showWarn = canIssueWarning(userRoleStr);
+                          const showDemote =
+                            canDemote(userRoleStr) &&
+                            user.id.toString() !== userId?.toString();
+                          const showWarn =
+                            canIssueWarning(userRoleStr) &&
+                            user.id.toString() !== userId?.toString();
                           const showChangePw =
-                            canViewPasswords && userRoleStr !== "owner";
-                          const showRename = role === "owner";
+                            canChangePasswordFor(userRoleStr) &&
+                            user.id.toString() !== userId?.toString();
+                          const showRename =
+                            canRenameUsers &&
+                            user.id.toString() !== userId?.toString();
                           return (
                             <tr
                               key={user.id.toString()}
